@@ -31,7 +31,8 @@
     }
     .game-controls {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
       gap: 20px;
     }
     .control-btn {
@@ -97,13 +98,13 @@
 
     // Event listeners for game controls
     document.getElementById('startGame').addEventListener('click', function() {
-      // Logic to start the game will go here
-      alert('Game starting... (placeholder)');
+      // Redirect to the game start page
+      window.location.href = 'gameStart.html';
     });
 
     document.getElementById('settings').addEventListener('click', function() {
       // Logic to open settings will go here
-      alert('Settings... (placeholder)');
+      alert('Settings... (placeholder)'); // Replace this with actual settings logic
     });
 
     // Initialize the username display when the page loads
