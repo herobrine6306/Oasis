@@ -1,133 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Osis Game</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-        }
-        canvas {
-            display: block;
-        }
-        #joystickContainer {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-        }
-    </style>
-    <script src="https://threejs.org/build/three.min.js"></script>
-    <script src="https://threejs.org/examples/js/loaders/OBJLoader.js"></script>
-    <script src="https://cdn.rawgit.com/schteppe/cannon.js/master/build/cannon.min.js"></script>
-    <script src="https://rawgit.com/matthewkruk/joystick/master/joystick.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Osis Game Start</title>
+  
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
 </head>
 <body>
-    <div id="joystickContainer"></div>
-    <script>
-        let scene, camera, renderer, player, floor;
-        let world, playerBody;
-        const keys = {};
 
-        function init() {
-            // Initialize the scene
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
+<canvas id="gameCanvas"></canvas>
 
-            // Initialize Cannon.js world
-            world = new CANNON.World();
-            world.gravity.set(0, -9.82, 0); // Gravity pointing down
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.rawgit.com/jakearchibald/shaver/v1.0.2/shaver.min.js"></script>
+<script>
+  let scene, camera, renderer, player, floor;
+  
+  // Initialize the game
+  function init() {
+    // Create scene
+    scene = new THREE.Scene();
+    
+    // Create camera
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    
+    // Create renderer
+    renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    // Add floor
+    loadFloor();
+    
+    // Add player model
+    loadPlayer();
+    
+    // Setup controls
+    setupControls();
+    
+    // Start animation loop
+    animate();
+  }
 
-            // Load the floor
-            const floorLoader = new THREE.OBJLoader();
-            floorLoader.load('floor.obj', function (obj) {
-                floor = obj;
-                floor.scale.set(10, 10, 10); // Scale as needed
-                scene.add(floor);
+  // Load the floor model
+  function loadFloor() {
+    const loader = new THREE.OBJLoader();
+    loader.load('floor.obj', function (object) {
+      floor = object;
+      floor.position.y = -1; // Position it below the player
+      scene.add(floor);
+    });
+  }
 
-                // Create floor physics body
-                const floorShape = new CANNON.Box(new CANNON.Vec3(5, 0.1, 5)); // Adjust dimensions as needed
-                const floorBody = new CANNON.Body({
-                    position: new CANNON.Vec3(0, -0.1, 0), // Position to match the Three.js floor
-                    type: CANNON.Body.STATIC
-                });
-                floorBody.addShape(floorShape);
-                world.addBody(floorBody);
-            });
+  // Load the player model
+  function loadPlayer() {
+    const loader = new THREE.OBJLoader();
+    loader.load('player.obj', function (object) {
+      player = object;
+      player.position.y = 0; // Start position of the player
+      scene.add(player);
+      camera.position.z = 5; // Set camera position
+    });
+  }
 
-            // Load the player model
-            const playerLoader = new THREE.OBJLoader();
-            playerLoader.load('player.obj', function (obj) {
-                player = obj;
-                player.scale.set(0.5, 0.5, 0.5); // Scale player model
-                player.position.set(0, 1, 0); // Spawn height above the floor
-                scene.add(player);
-
-                // Create player physics body
-                playerBody = new CANNON.Body({
-                    mass: 1, // Set mass to 1 for the player
-                    position: new CANNON.Vec3(0, 1, 0) // Initial position
-                });
-                const playerShape = new CANNON.Box(new CANNON.Vec3(0.5, 1, 0.5)); // Adjust dimensions
-                playerBody.addShape(playerShape);
-                world.addBody(playerBody);
-            });
-
-            // Set up lighting
-            const light = new THREE.AmbientLight(0xffffff);
-            scene.add(light);
-            camera.position.z = 5;
-
-            // Joystick setup
-            const joystick = new Joystick({
-                container: document.getElementById('joystickContainer'),
-                position: { left: 100, bottom: 100 }
-            });
-
-            // Update loop
-            function animate() {
-                requestAnimationFrame(animate);
-                world.step(1/60); // Step the physics world
-
-                // Update player position
-                if (playerBody) {
-                    player.position.copy(playerBody.position);
-                    player.quaternion.copy(playerBody.quaternion);
-                }
-
-                // Update camera to follow the player
-                camera.position.set(player.position.x, player.position.y + 2, player.position.z + 5);
-                camera.lookAt(player.position);
-
-                // Render the scene
-                renderer.render(scene, camera);
-            }
-            animate();
-
-            // Handle joystick movement
-            joystick.on('move', function(event) {
-                const moveForce = 5; // Adjust force as needed
-                if (playerBody) {
-                    playerBody.applyForce(new CANNON.Vec3(event.x * moveForce, 0, event.y * moveForce), playerBody.position);
-                }
-            });
-
-            // Handle key presses for additional controls
-            window.addEventListener('keydown', function(event) {
-                keys[event.key] = true;
-            });
-            window.addEventListener('keyup', function(event) {
-                keys[event.key] = false;
-            });
+  // Setup controls using Shaver.js for mobile
+  function setupControls() {
+    const joystick = new Shaver({
+      container: document.body,
+      buttons: ['up', 'down', 'left', 'right'],
+      // Adjust button size and placement as needed
+      size: 100,
+      onMove: function (direction) {
+        if (player) {
+          if (direction === 'up') player.position.z -= 0.1;
+          if (direction === 'down') player.position.z += 0.1;
+          if (direction === 'left') player.position.x -= 0.1;
+          if (direction === 'right') player.position.x += 0.1;
         }
+      }
+    });
+  }
 
-        window.onload = init;
-    </script>
+  // Animation loop
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+
+  // Resize the canvas
+  window.addEventListener('resize', function() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // Start the game
+  init();
+</script>
+
 </body>
 </html>
+
 
