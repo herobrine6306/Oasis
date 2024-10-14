@@ -3,9 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login to My Multiplayer Game</title>
+  <title>Login to Osis</title>
   
-  <!-- Import Firebase libraries -->
+  <style>
+    body {
+      text-align: center;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(to right, #4e54c8, #8f94fb);
+      color: white;
+      padding: 50px;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 1s;
+    }
+    h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+    .login-btn, .username-btn {
+      padding: 15px 30px;
+      background-color: #FF4081;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 10px;
+      margin-top: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s;
+    }
+    .login-btn:hover, .username-btn:hover {
+      transform: scale(1.05);
+      background-color: #FF1A5B;
+    }
+    #usernameContainer {
+      display: none;
+      margin-top: 20px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Login to Osis</h1>
+  <button class="login-btn" id="googleLogin">Login with Google</button>
+
+  <div id="usernameContainer">
+    <h2>Choose a Username</h2>
+    <input type="text" id="usernameInput" placeholder="Enter your username" />
+    <button class="username-btn" id="submitUsername">Submit</button>
+  </div>
+
   <script type="module">
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
@@ -29,54 +85,42 @@
     const auth = getAuth();
 
     // Google Login
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('googleLogin').addEventListener('click', function() {
-        const provider = new GoogleAuthProvider();
-        signInWithPopup(auth, provider)
-          .then((result) => {
-            const user = result.user;
-            alert(`Welcome ${user.displayName}!`);
-            // Redirect to the game screen
-            window.location.href = 'game.html'; // Create this page later
-          })
-          .catch((error) => {
-            console.error("Login Failed: ", error);
-            alert("Login failed. Please try again.");
-          });
-      });
+    document.getElementById('googleLogin').addEventListener('click', function() {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          const user = result.user;
+
+          // Check if the user has already selected a username
+          const existingUsername = localStorage.getItem('username');
+          if (existingUsername) {
+            alert(`Welcome back, ${existingUsername}!`);
+            window.location.href = 'game.html'; // Redirect to the game screen
+          } else {
+            document.getElementById('usernameContainer').style.display = 'block'; // Show username input
+            document.getElementById('googleLogin').style.display = 'none'; // Hide login button
+          }
+        })
+        .catch((error) => {
+          console.error("Login Failed: ", error);
+          alert("Login failed. Please try again.");
+        });
+    });
+
+    // Submit Username
+    document.getElementById('submitUsername').addEventListener('click', function() {
+      const username = document.getElementById('usernameInput').value;
+      if (username) {
+        // Store the username in local storage
+        localStorage.setItem('username', username);
+        alert(`Username "${username}" set!`);
+        window.location.href = 'game.html'; // Redirect to the game screen
+      } else {
+        alert("Please enter a username.");
+      }
     });
   </script>
 
-  <style>
-    body {
-      text-align: center;
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      padding: 20px;
-    }
-    h2 {
-      margin-top: 50px;
-      color: #333;
-    }
-    .login-btn {
-      margin-top: 20px;
-      padding: 15px 30px;
-      background-color: #4285F4;
-      color: white;
-      font-size: 18px;
-      border: none;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    .login-btn:hover {
-      background-color: #357ae8;
-    }
-  </style>
-</head>
-<body>
-
-  <h2>Login to Play</h2>
-  <button class="login-btn" id="googleLogin">Login with Google</button>
-
 </body>
 </html>
+
