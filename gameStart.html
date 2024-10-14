@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Osis Game - Play</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+
+  <script src="https://threejs.org/build/three.min.js"></script>
+  <script src="https://cdn.rawgit.com/SelbaWard/cannon-es/master/dist/cannon-es.js"></script>
+  <script src="https://threejs.org/examples/js/loaders/OBJLoader.js"></script>
+  <script src="https://threejs.org/examples/js/loaders/MTLLoader.js"></script>
+
+  <script>
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Create a physics world
+    const world = new CANNON.World();
+    world.gravity.set(0, -9.82, 0); // Set gravity
+
+    // Load the 3D model
+    const objLoader = new THREE.OBJLoader();
+    const mtlLoader = new THREE.MTLLoader();
+
+    mtlLoader.load('models/floor.mtl', materials => {
+      materials.preload();
+      objLoader.setMaterials(materials);
+      objLoader.load('models/floor.obj', object => {
+        scene.add(object);
+        
+        // Set up physics for the model
+        const shape = new CANNON.Box(new CANNON.Vec3(10, 0.1, 10)); // Adjust size according to your model
+        const floorBody = new CANNON.Body({
+          position: new CANNON.Vec3(0, -0.1, 0), // Adjust Y position if necessary
+          mass: 0 // Static object
+        });
+        floorBody.addShape(shape);
+        world.addBody(floorBody);
+      });
+    });
+
+    // Create a player object
+    const playerGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const playerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const player = new THREE.Mesh(playerGeometry, playerMaterial);
+    scene.add(player);
+
+    // Set player physics
+    const playerBody = new CANNON.Body({
+      mass: 1,
+      position: new CANNON.Vec3(0, 1, 0) // Spawn above the floor
+    });
+    playerBody.addShape(new CANNON.Sphere(0.5));
+    world.addBody(playerBody);
+
+    // Camera position
+    camera.position.z = 5;
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      world.step(1 / 60); // Step the physics world
+
+      // Sync Three.js and Cannon.js positions
+      player.position.copy(playerBody.position);
+      player.quaternion.copy(playerBody.quaternion);
+      
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Handle window resizing
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+
+</body>
+</html>
