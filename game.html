@@ -98,9 +98,9 @@
 
     // Event listeners for game controls
     document.getElementById('startGame').addEventListener('click', function() {
-      // Start the game by loading the gameStart.js script
+      // Load gameStart.js to start the game
       const script = document.createElement('script');
-      script.src = 'gameStart.js';
+      script.src = 'gameStart.js';  // Make sure this file exists
       document.body.appendChild(script);
     });
 
@@ -115,3 +115,4 @@
 
 </body>
 </html>
+
