@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login to My Multiplayer Game</title>
+  
+  <!-- Import Firebase libraries -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0yJVXwTh2n9977I6EJvSU-9PVCXApv9U",
+      authDomain: "osasis-3f8e1.firebaseapp.com",
+      projectId: "osasis-3f8e1",
+      storageBucket: "osasis-3f8e1.appspot.com",
+      messagingSenderId: "345247701208",
+      appId: "1:345247701208:web:af10f6a50d7af9789e1fad",
+      measurementId: "G-1T2TLVKWGZ"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth();
+
+    // Google Login
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('googleLogin').addEventListener('click', function() {
+        const provider = new GoogleAuthProvider();
+        signInWithPopup(auth, provider)
+          .then((result) => {
+            const user = result.user;
+            alert(`Welcome ${user.displayName}!`);
+            // Redirect to the game screen
+            window.location.href = 'game.html'; // Create this page later
+          })
+          .catch((error) => {
+            console.error("Login Failed: ", error);
+            alert("Login failed. Please try again.");
+          });
+      });
+    });
+  </script>
+
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      padding: 20px;
+    }
+    h2 {
+      margin-top: 50px;
+      color: #333;
+    }
+    .login-btn {
+      margin-top: 20px;
+      padding: 15px 30px;
+      background-color: #4285F4;
+      color: white;
+      font-size: 18px;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .login-btn:hover {
+      background-color: #357ae8;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Login to Play</h2>
+  <button class="login-btn" id="googleLogin">Login with Google</button>
+
+</body>
+</html>
