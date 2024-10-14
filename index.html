@@ -3,37 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to My Multiplayer Game</title>
-
+  <title>Welcome to Osis</title>
+  
   <style>
     body {
       text-align: center;
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      padding: 20px;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(to right, #4e54c8, #8f94fb);
+      color: white;
+      padding: 50px;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 1s;
     }
     h1 {
-      margin-top: 50px;
-      color: #333;
+      font-size: 48px;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    p {
+      font-size: 24px;
+      margin-bottom: 30px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     }
     .login-btn {
-      margin-top: 20px;
       padding: 15px 30px;
-      background-color: #4285F4;
-      color: white;
-      font-size: 18px;
+      background-color: #FF4081;
       border: none;
+      color: white;
+      font-size: 20px;
       cursor: pointer;
-      border-radius: 5px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s;
     }
     .login-btn:hover {
-      background-color: #357ae8;
+      transform: scale(1.05);
+      background-color: #FF1A5B;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
   </style>
 </head>
 <body>
 
-  <h1>Welcome to My Multiplayer Game</h1>
+  <h1>Welcome to Osis</h1>
+  <p>Enter a world where you can do anything!</p>
   <button class="login-btn" id="googleLogin">Login with Google</button>
 
   <script>
@@ -45,4 +67,3 @@
 
 </body>
 </html>
-
