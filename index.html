@@ -3,44 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Multiplayer Game</title>
+  <title>Welcome to My Multiplayer Game</title>
+
   <style>
     body {
-      font-family: Arial, sans-serif;
       text-align: center;
+      font-family: Arial, sans-serif;
       background-color: #f0f0f0;
-      margin: 0;
-      padding: 0;
+      padding: 20px;
     }
     h1 {
       margin-top: 50px;
       color: #333;
     }
-    .start-btn {
+    .login-btn {
       margin-top: 20px;
       padding: 15px 30px;
-      background-color: #4CAF50;
+      background-color: #4285F4;
       color: white;
       font-size: 18px;
       border: none;
       cursor: pointer;
       border-radius: 5px;
     }
-    .start-btn:hover {
-      background-color: #45a049;
+    .login-btn:hover {
+      background-color: #357ae8;
     }
   </style>
 </head>
 <body>
 
   <h1>Welcome to My Multiplayer Game</h1>
-  <button class="start-btn" onclick="startGame()">Start</button>
+  <button class="login-btn" id="googleLogin">Login with Google</button>
 
   <script>
-    function startGame() {
-      window.location.href = 'login.html'; // This will be our next step, linking to the login page
-    }
+    // Redirect to login.html when the button is clicked
+    document.getElementById('googleLogin').addEventListener('click', function() {
+      window.location.href = 'login.html';
+    });
   </script>
-  
+
 </body>
 </html>
+
