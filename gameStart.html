@@ -1,94 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Osis Game - Play</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Osis Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #joystickContainer {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+        }
+    </style>
+    <script src="https://threejs.org/build/three.min.js"></script>
+    <script src="https://threejs.org/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.rawgit.com/schteppe/cannon.js/master/build/cannon.min.js"></script>
+    <script src="https://rawgit.com/matthewkruk/joystick/master/joystick.js"></script>
 </head>
 <body>
+    <div id="joystickContainer"></div>
+    <script>
+        let scene, camera, renderer, player, floor;
+        let world, playerBody;
+        const keys = {};
 
-  <script src="https://threejs.org/build/three.min.js"></script>
-  <script src="https://cdn.rawgit.com/SelbaWard/cannon-es/master/dist/cannon-es.js"></script>
-  <script src="https://threejs.org/examples/js/loaders/OBJLoader.js"></script>
-  <script src="https://threejs.org/examples/js/loaders/MTLLoader.js"></script>
+        function init() {
+            // Initialize the scene
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
 
-  <script>
-    // Scene setup
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+            // Initialize Cannon.js world
+            world = new CANNON.World();
+            world.gravity.set(0, -9.82, 0); // Gravity pointing down
 
-    // Create a physics world
-    const world = new CANNON.World();
-    world.gravity.set(0, -9.82, 0); // Set gravity
+            // Load the floor
+            const floorLoader = new THREE.OBJLoader();
+            floorLoader.load('floor.obj', function (obj) {
+                floor = obj;
+                floor.scale.set(10, 10, 10); // Scale as needed
+                scene.add(floor);
 
-    // Load the 3D model
-    const objLoader = new THREE.OBJLoader();
-    const mtlLoader = new THREE.MTLLoader();
+                // Create floor physics body
+                const floorShape = new CANNON.Box(new CANNON.Vec3(5, 0.1, 5)); // Adjust dimensions as needed
+                const floorBody = new CANNON.Body({
+                    position: new CANNON.Vec3(0, -0.1, 0), // Position to match the Three.js floor
+                    type: CANNON.Body.STATIC
+                });
+                floorBody.addShape(floorShape);
+                world.addBody(floorBody);
+            });
 
-    mtlLoader.load('models/floor.mtl', materials => {
-      materials.preload();
-      objLoader.setMaterials(materials);
-      objLoader.load('models/floor.obj', object => {
-        scene.add(object);
-        
-        // Set up physics for the model
-        const shape = new CANNON.Box(new CANNON.Vec3(10, 0.1, 10)); // Adjust size according to your model
-        const floorBody = new CANNON.Body({
-          position: new CANNON.Vec3(0, -0.1, 0), // Adjust Y position if necessary
-          mass: 0 // Static object
-        });
-        floorBody.addShape(shape);
-        world.addBody(floorBody);
-      });
-    });
+            // Load the player model
+            const playerLoader = new THREE.OBJLoader();
+            playerLoader.load('player.obj', function (obj) {
+                player = obj;
+                player.scale.set(0.5, 0.5, 0.5); // Scale player model
+                player.position.set(0, 1, 0); // Spawn height above the floor
+                scene.add(player);
 
-    // Create a player object
-    const playerGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const playerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    const player = new THREE.Mesh(playerGeometry, playerMaterial);
-    scene.add(player);
+                // Create player physics body
+                playerBody = new CANNON.Body({
+                    mass: 1, // Set mass to 1 for the player
+                    position: new CANNON.Vec3(0, 1, 0) // Initial position
+                });
+                const playerShape = new CANNON.Box(new CANNON.Vec3(0.5, 1, 0.5)); // Adjust dimensions
+                playerBody.addShape(playerShape);
+                world.addBody(playerBody);
+            });
 
-    // Set player physics
-    const playerBody = new CANNON.Body({
-      mass: 1,
-      position: new CANNON.Vec3(0, 1, 0) // Spawn above the floor
-    });
-    playerBody.addShape(new CANNON.Sphere(0.5));
-    world.addBody(playerBody);
+            // Set up lighting
+            const light = new THREE.AmbientLight(0xffffff);
+            scene.add(light);
+            camera.position.z = 5;
 
-    // Camera position
-    camera.position.z = 5;
+            // Joystick setup
+            const joystick = new Joystick({
+                container: document.getElementById('joystickContainer'),
+                position: { left: 100, bottom: 100 }
+            });
 
-    // Animation loop
-    function animate() {
-      requestAnimationFrame(animate);
-      world.step(1 / 60); // Step the physics world
+            // Update loop
+            function animate() {
+                requestAnimationFrame(animate);
+                world.step(1/60); // Step the physics world
 
-      // Sync Three.js and Cannon.js positions
-      player.position.copy(playerBody.position);
-      player.quaternion.copy(playerBody.quaternion);
-      
-      renderer.render(scene, camera);
-    }
+                // Update player position
+                if (playerBody) {
+                    player.position.copy(playerBody.position);
+                    player.quaternion.copy(playerBody.quaternion);
+                }
 
-    animate();
+                // Update camera to follow the player
+                camera.position.set(player.position.x, player.position.y + 2, player.position.z + 5);
+                camera.lookAt(player.position);
 
-    // Handle window resizing
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
+                // Render the scene
+                renderer.render(scene, camera);
+            }
+            animate();
 
+            // Handle joystick movement
+            joystick.on('move', function(event) {
+                const moveForce = 5; // Adjust force as needed
+                if (playerBody) {
+                    playerBody.applyForce(new CANNON.Vec3(event.x * moveForce, 0, event.y * moveForce), playerBody.position);
+                }
+            });
+
+            // Handle key presses for additional controls
+            window.addEventListener('keydown', function(event) {
+                keys[event.key] = true;
+            });
+            window.addEventListener('keyup', function(event) {
+                keys[event.key] = false;
+            });
+        }
+
+        window.onload = init;
+    </script>
 </body>
 </html>
+
