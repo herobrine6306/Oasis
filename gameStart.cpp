@@ -1,62 +1,57 @@
 #include <iostream>
-#include <SDL.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <GL/glut.h> // Include the OpenGL header
+#include <fstream>
+#include <vector>
+#include <string>
 
-// Function to load game assets
+std::vector<std::string> loadOBJ(const char* path) {
+    std::ifstream file(path);
+    std::vector<std::string> lines;
+    std::string line;
+
+    while (std::getline(file, line)) {
+        lines.push_back(line);
+    }
+    return lines;
+}
+
 void loadGameAssets() {
-    // Load your floor.obj and player.obj here
-    std::cout << "Loading game assets..." << std::endl;
+    // Load your player.obj and floor.obj here
+    auto playerLines = loadOBJ("player.obj");
+    auto floorLines = loadOBJ("floor.obj");
+
+    // Process the loaded data as needed
+    // For simplicity, we are just printing the first line
+    std::cout << "Loaded player asset: " << playerLines[0] << std::endl;
+    std::cout << "Loaded floor asset: " << floorLines[0] << std::endl;
 }
 
-// Function to handle joystick input
-void handleJoystickInput(SDL_Joystick* joystick) {
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_JOYAXISMOTION) {
-            if (event.jaxis.axis == 0) {
-                // Handle horizontal joystick movement
-                std::cout << "Horizontal movement: " << event.jaxis.value << std::endl;
-            }
-            else if (event.jaxis.axis == 1) {
-                // Handle vertical joystick movement
-                std::cout << "Vertical movement: " << event.jaxis.value << std::endl;
-            }
-        }
-    }
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+
+    // Add code to draw player and floor
+    // Here, you would typically render your 3D models
+
+    glutSwapBuffers();
 }
 
-void startGame() {
+void init() {
+    glEnable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    gluPerspective(45.0, 1.333, 0.1, 100.0);
+    glMatrixMode(GL_MODELVIEW);
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+    glutInitWindowSize(800, 600);
+    glutCreateWindow("Game");
+    init();
     loadGameAssets();
-    
-    // Initialize SDL for joystick support
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
-        std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
-        return;
-    }
-
-    SDL_Joystick* joystick = SDL_JoystickOpen(0);
-    if (joystick == nullptr) {
-        std::cerr << "Failed to open joystick: " << SDL_GetError() << std::endl;
-        return;
-    }
-
-    bool running = true;
-    while (running) {
-        handleJoystickInput(joystick);
-
-        // Additional game loop logic here
-
-        // For demo purposes, break after one loop
-        running = false;
-    }
-
-    SDL_JoystickClose(joystick);
-    SDL_Quit();
-}
-
-int main(int argc, char* argv[]) {
-    startGame();
+    glutDisplayFunc(display);
+    glutIdleFunc(display);
+    glutMainLoop();
     return 0;
 }
