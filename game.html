@@ -1,116 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Osis Game</title>
-  
-  <style>
-    body {
-      text-align: center;
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(to right, #4e54c8, #8f94fb);
-      color: white;
-      padding: 50px;
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-    h1 {
-      font-size: 48px;
-      margin-bottom: 20px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    }
-    p {
-      font-size: 24px;
-      margin-bottom: 30px;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    }
-    .game-controls {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-    }
-    .control-btn {
-      padding: 15px 30px;
-      background-color: #FF4081;
-      border: none;
-      color: white;
-      font-size: 20px;
-      cursor: pointer;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      transition: transform 0.2s;
-    }
-    .control-btn:hover {
-      transform: scale(1.05);
-      background-color: #FF1A5B;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Osis Game</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        #startButton {
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #startButton:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
+    <h1>Welcome to Osis</h1>
+    <input type="text" id="username" placeholder="Enter your username" required>
+    <button id="startButton">Start Game</button>
 
-  <h1>Welcome to Osis</h1>
-  <p id="usernameDisplay">Loading username...</p>
+    <script>
+        // Retrieve username from local storage
+        const storedUsername = localStorage.getItem('username');
+        
+        // Check if a username is found
+        if (storedUsername) {
+            document.getElementById('username').value = storedUsername; // Populate input field
+        } else {
+            // Prompt for a new username if none is found
+            alert('No username found! Please enter a new username.');
+        }
 
-  <div class="game-controls">
-    <button class="control-btn" id="setUsername">Set Username</button>
-    <button class="control-btn" id="startGame">Start Game</button>
-    <button class="control-btn" id="settings">Settings</button>
-  </div>
-
-  <script>
-    // Function to get username from local storage
-    function getUsername() {
-      return localStorage.getItem('username');
-    }
-
-    // Function to set username in local storage
-    function setUsername(name) {
-      localStorage.setItem('username', name);
-    }
-
-    // Initialize username display
-    function initUsername() {
-      const username = getUsername();
-      if (username) {
-        document.getElementById('usernameDisplay').innerText = `Hello, ${username}!`;
-      } else {
-        promptForUsername();
-      }
-    }
-
-    // Prompt user to enter a username
-    function promptForUsername() {
-      const username = prompt("Please enter your username:");
-      if (username) {
-        setUsername(username);
-        document.getElementById('usernameDisplay').innerText = `Hello, ${username}!`;
-      } else {
-        alert("Username cannot be empty!");
-        promptForUsername(); // Prompt again if the username is empty
-      }
-    }
-
-    // Event listeners for game controls
-    document.getElementById('startGame').addEventListener('click', function() {
-      // Redirect to the game start page
-      window.location.href = 'gameStart.html';
-    });
-
-    document.getElementById('settings').addEventListener('click', function() {
-      // Logic to open settings will go here
-      alert('Settings... (placeholder)'); // Replace this with actual settings logic
-    });
-
-    // Initialize the username display when the page loads
-    initUsername();
-  </script>
-
+        // Event listener for starting the game
+        document.getElementById('startButton').addEventListener('click', function() {
+            const username = document.getElementById('username').value;
+            if (username) {
+                // Store username in local storage for use in gameStart.html
+                localStorage.setItem('username', username);
+                window.location.href = 'gameStart.html'; // Redirects to gameStart.html
+            } else {
+                alert('Please enter a username!');
+            }
+        });
+    </script>
 </body>
 </html>
-
