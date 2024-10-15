@@ -4,49 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Start</title>
-    <script type="module" src="three.module.js"></script>
     <style>
         body { margin: 0; }
         canvas { display: block; }
+        #joystick {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            z-index: 10;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.rawgit.com/matthewkever/three.js/master/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.rawgit.com/matthewkever/three.js/master/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.8.1/nipplejs.min.js"></script>
 </head>
 <body>
     <script type="module">
-        import * as THREE from './three.module.js';
+        let scene, camera, renderer, controls;
+        let player, floor;
+        let joystick;
 
-        let scene, camera, renderer, player, floor;
-        let joystick, moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-
+        // Initialize scene, camera, renderer
         function init() {
-            // Set up the scene
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer();
+            renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            // Load the floor and player models
-            const loader = new THREE.ObjectLoader();
-            loader.load('floor.obj', function (obj) {
-                floor = obj;
-                scene.add(floor);
-                floor.position.y = -1; // Set floor position
-                floor.scale.set(10, 1, 10); // Scale the floor
-            });
+            // Set camera position
+            camera.position.set(0, 5, 15);
 
-            loader.load('player.obj', function (obj) {
-                player = obj;
-                scene.add(player);
-                player.position.y = 0; // Set player position
-            });
+            // Add orbit controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+            controls.dampingFactor = 0.25;
+            controls.screenSpacePanning = false;
+            controls.maxPolarAngle = Math.PI / 2;
 
-            // Set up the camera position
-            camera.position.z = 5;
-            camera.position.y = 2;
-            camera.lookAt(0, 0, 0);
+            // Load models
+            loadModels();
 
-            // Initialize joystick controls
-            setupJoysticks();
+            // Initialize joystick
+            initJoystick();
 
             // Handle window resize
             window.addEventListener('resize', onWindowResize, false);
@@ -54,54 +55,71 @@
             animate();
         }
 
+        // Load models
+        function loadModels() {
+            const loader = new THREE.OBJLoader();
+
+            loader.load('player.obj', function(object) {
+                player = object;
+                player.position.set(0, 0, 0);
+                player.scale.set(0.5, 0.5, 0.5); // Scale the player model
+                scene.add(player);
+            });
+
+            loader.load('floor.obj', function(object) {
+                floor = object;
+                floor.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+                floor.position.set(0, -1, 0);
+                floor.scale.set(10, 10, 10); // Adjust the size of the floor
+                scene.add(floor);
+            });
+        }
+
+        // Initialize joystick
+        function initJoystick() {
+            joystick = nipplejs.create({
+                zone: document.getElementById('joystick'),
+                mode: 'static',
+                position: { left: '50%', bottom: '50px' },
+                color: 'blue',
+                size: 100,
+                multitouch: true,
+                fadeTime: 500,
+                fadeDelay: 1000
+            });
+
+            joystick.on('move', function (evt, data) {
+                const x = data.position.x - 50; // Normalize x
+                const y = data.position.y - 50; // Normalize y
+
+                // Move the player based on joystick input
+                if (player) {
+                    player.position.x += (x / 50) * 0.1; // Adjust speed factor as needed
+                    player.position.z += (y / 50) * 0.1; // Adjust speed factor as needed
+                }
+            });
+
+            joystick.on('end', function () {
+                // Stop the player movement
+            });
+        }
+
+        // Animate the scene
         function animate() {
             requestAnimationFrame(animate);
-
-            // Update player movement
-            if (moveForward) player.position.z -= 0.1;
-            if (moveBackward) player.position.z += 0.1;
-            if (moveLeft) player.position.x -= 0.1;
-            if (moveRight) player.position.x += 0.1;
-
-            // Render the scene
+            controls.update(); // Only required if controls.enableDamping = true, or if controls.autoRotate = true
             renderer.render(scene, camera);
         }
 
+        // Handle window resize
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        function setupJoysticks() {
-            // Joystick setup code (you might use a library like nipplejs)
-            // Example joystick configuration for movement
-            // Ensure joystick library is included in your project
-            const joystickContainer = document.createElement('div');
-            document.body.appendChild(joystickContainer);
-
-            const joystick = new Joystick(joystickContainer, {
-                mode: 'dynamic',
-                position: { left: '50%', top: '50%' },
-                color: 'blue',
-            });
-
-            joystick.on('move', (event) => {
-                moveForward = event.direction === 'up';
-                moveBackward = event.direction === 'down';
-                moveLeft = event.direction === 'left';
-                moveRight = event.direction === 'right';
-            });
-
-            joystick.on('end', () => {
-                moveForward = false;
-                moveBackward = false;
-                moveLeft = false;
-                moveRight = false;
-            });
-        }
-
-        init();
+        window.onload = init;
     </script>
+    <div id="joystick"></div>
 </body>
 </html>
