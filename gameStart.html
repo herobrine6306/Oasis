@@ -6,85 +6,115 @@
     <title>3D Game Start</title>
     <script type="module" src="three.module.js"></script>
     <script type="module" src="OBJLoader.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #errorLog {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: black;
+            color: white;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            display: none;
+        }
+    </style>
 </head>
 <body>
 
 <canvas id="gameCanvas"></canvas>
+<div id="errorLog"></div>
 
 <script type="module">
     import * as THREE from './three.module.js';
     import { OBJLoader } from './OBJLoader.js';
 
-    function handleError(error) {
-        // Log error to console
-        console.error(error);
-        
-        // Display error as a popup
-        alert(`Error: ${error.message || error}`);
+    const errorLog = document.getElementById('errorLog');
+
+    function logError(error) {
+        // Show the error log div
+        errorLog.style.display = 'block';
+
+        // Append the error message
+        errorLog.innerHTML += `<p>${new Date().toISOString()} - ${error.message || error}</p>`;
+        console.error(error); // Still log it in the console
     }
 
     try {
         // Scene setup
         const scene = new THREE.Scene();
-
-        // Add a background (skybox color)
-        scene.background = new THREE.Color(0x87CEEB); // Light blue sky color
-
+        
         // Camera setup
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 10, 20); // Adjust camera position
+        camera.position.set(0, 5, 10);  // Adjust for 3D space
 
         // Renderer setup
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas') });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
 
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0x404040, 2); // Soft ambient light
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0x404040); // Soft ambient light
         scene.add(ambientLight);
-
         const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(5, 10, 7.5); // Position light
+        directionalLight.position.set(10, 10, 10).normalize(); // Directional light
         scene.add(directionalLight);
 
         // Load floor object
         const loader = new OBJLoader();
         loader.load('floor.obj', function (object) {
-            object.scale.set(10, 10, 10); // Scale the floor
-            object.position.y = 0; // Adjust floor position
+            object.scale.set(10, 10, 10);
+            object.position.y = 0;
             scene.add(object);
+            console.log("Floor loaded successfully");
         }, undefined, function (error) {
-            handleError(error); // Catch loading errors
+            logError(`Failed to load floor.obj: ${error.message}`);
         });
 
         // Load player object
         loader.load('player.obj', function (object) {
-            object.scale.set(1, 1, 1); // Scale the player
-            object.position.set(0, 1, 0); // Adjust player position
+            object.scale.set(1, 1, 1);
+            object.position.set(0, 1, 0);
             scene.add(object);
+            console.log("Player loaded successfully");
         }, undefined, function (error) {
-            handleError(error); // Catch loading errors
+            logError(`Failed to load player.obj: ${error.message}`);
         });
 
-        // Game loop
-        function animate() {
-            requestAnimationFrame(animate);
+        // Error logging if WebGL context fails
+        renderer.domElement.addEventListener("webglcontextlost", function (event) {
+            logError("WebGL context lost.");
+            event.preventDefault();
+        }, false);
 
-            // Add any movement or player updates here
-
-            renderer.render(scene, camera);
-        }
-
-        // Handle window resize
+        // Resize handler
         window.addEventListener('resize', function () {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        // Game loop
+        function animate() {
+            try {
+                requestAnimationFrame(animate);
+
+                // Add player movement, etc.
+
+                renderer.render(scene, camera);
+            } catch (error) {
+                logError(`Error in game loop: ${error.message}`);
+            }
+        }
+
         animate();
     } catch (error) {
-        handleError(error); // Catch any global errors
+        logError(`Global error: ${error.message}`);
     }
 </script>
 
