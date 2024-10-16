@@ -1,92 +1,58 @@
-<!DOCTYPE html>
+p<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oasis Game</title>
-    <script type="module" src="three.module.js"></script>
-    <script type="module" src="OBJLoader.js"></script>
-    <script type="module" src="controls.js"></script>
-    <style>
-        body { margin: 0; overflow: hidden; }
-        canvas { display: block; }
-    </style>
-</head>
-<body>
     <script type="module">
         import * as THREE from './three.module.js';
         import { OrbitControls } from './controls.js';
-        import { OBJLoader } from './OBJLoader.js';
 
         let scene, camera, renderer, controls;
         let player, floor;
-        let errors = []; // Array to store errors
+        let errors = [];
 
         function init() {
-            try {
-                scene = new THREE.Scene();
-                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                renderer = new THREE.WebGLRenderer({ antialias: true });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                document.body.appendChild(renderer.domElement);
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
 
-                controls = new OrbitControls(camera, renderer.domElement);
-                controls.enableDamping = true;
+            controls = new OrbitControls(camera, renderer.domElement);
+            camera.position.set(0, 5, 10);
+            controls.update();
 
-                camera.position.set(0, 5, 10);
-                controls.update();
-
-                window.addEventListener('resize', onWindowResize, false);
-                loadAssets();
-            } catch (error) {
-                logError("Initialization Error: " + error);
-            }
+            loadAssets();
+            animate();
         }
 
         function loadAssets() {
-            const objLoader = new OBJLoader();
-            try {
-                objLoader.load('floor.obj', function (object) {
-                    floor = object;
-                    floor.position.y = -1;
-                    scene.add(floor);
-                    checkLoadComplete();
-                }, undefined, function (error) {
-                    logError("Error loading floor.obj: " + error);
-                });
+            const loader = new THREE.OBJLoader();
 
-                objLoader.load('player.obj', function (object) {
-                    player = object;
-                    player.position.y = 0;
-                    scene.add(player);
-                    checkLoadComplete();
-                }, undefined, function (error) {
-                    logError("Error loading player.obj: " + error);
-                });
+            // Load Floor
+            loader.load('./floor.obj', function (obj) {
+                floor = obj;
+                floor.position.y = -1;
+                scene.add(floor);
+            }, undefined, function (error) {
+                logError('Error loading floor.obj: ' + error);
+            });
 
-                // Add lights to the scene
-                const light = new THREE.AmbientLight(0xffffff, 0.5);
-                scene.add(light);
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-                directionalLight.position.set(5, 5, 5);
-                scene.add(directionalLight);
-            } catch (error) {
-                logError("Asset Loading Error: " + error);
-            }
+            // Load Player
+            loader.load('./player.obj', function (obj) {
+                player = obj;
+                player.position.y = 0;
+                scene.add(player);
+            }, undefined, function (error) {
+                logError('Error loading player.obj: ' + error);
+            });
         }
 
-        function checkLoadComplete() {
-            if (floor && player) {
-                startGame();
-            }
-        }
-
-        function startGame() {
-            try {
-                animate();
-            } catch (error) {
-                logError("Start Game Error: " + error);
-            }
+        function logError(message) {
+            errors.push(message);
+            console.error(message);
+            alert('Error: ' + message);
         }
 
         function animate() {
@@ -95,23 +61,15 @@
             renderer.render(scene, camera);
         }
 
-        function logError(message) {
-            console.error(message);
-            errors.push(message); // Log to errors array
-            alert("Error: " + message); // Display error as alert
-        }
-
-        function onWindowResize() {
-            try {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            } catch (error) {
-                logError("Resize Error: " + error);
-            }
-        }
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
 
         init();
     </script>
+</head>
+<body>
 </body>
 </html>
