@@ -3,120 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Game Start</title>
-    <script type="module" src="three.module.js"></script>
-    <script type="module" src="OBJLoader.js"></script>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-        #errorLog {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: black;
-            color: white;
-            max-height: 200px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 12px;
-            display: none;
-        }
-    </style>
-</head>
-<body>
+    <title>Game Start</title>
+    <script type="module">
+        import * as THREE from './three.module.js';
+        import { OBJLoader } from './OBJLoader.js';
 
-<canvas id="gameCanvas"></canvas>
-<div id="errorLog"></div>
-
-<script type="module">
-    import * as THREE from './three.module.js';
-    import { OBJLoader } from './OBJLoader.js';
-
-    const errorLog = document.getElementById('errorLog');
-
-    function logError(error) {
-        // Show the error log div
-        errorLog.style.display = 'block';
-
-        // Append the error message
-        errorLog.innerHTML += `<p>${new Date().toISOString()} - ${error.message || error}</p>`;
-        console.error(error); // Still log it in the console
-    }
-
-    try {
-        // Scene setup
-        const scene = new THREE.Scene();
-        
-        // Camera setup
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 5, 10);  // Adjust for 3D space
-
-        // Renderer setup
-        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas') });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-
-        // Add lighting
-        const ambientLight = new THREE.AmbientLight(0x404040); // Soft ambient light
-        scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(10, 10, 10).normalize(); // Directional light
-        scene.add(directionalLight);
-
-        // Load floor object
-        const loader = new OBJLoader();
-        loader.load('floor.obj', function (object) {
-            object.scale.set(10, 10, 10);
-            object.position.y = 0;
-            scene.add(object);
-            console.log("Floor loaded successfully");
-        }, undefined, function (error) {
-            logError(`Failed to load floor.obj: ${error.message}`);
-        });
-
-        // Load player object
-        loader.load('player.obj', function (object) {
-            object.scale.set(1, 1, 1);
-            object.position.set(0, 1, 0);
-            scene.add(object);
-            console.log("Player loaded successfully");
-        }, undefined, function (error) {
-            logError(`Failed to load player.obj: ${error.message}`);
-        });
-
-        // Error logging if WebGL context fails
-        renderer.domElement.addEventListener("webglcontextlost", function (event) {
-            logError("WebGL context lost.");
-            event.preventDefault();
-        }, false);
-
-        // Resize handler
-        window.addEventListener('resize', function () {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // Game loop
-        function animate() {
+        // Log errors to Replit server
+        async function logError(error) {
             try {
-                requestAnimationFrame(animate);
-
-                // Add player movement, etc.
-
-                renderer.render(scene, camera);
-            } catch (error) {
-                logError(`Error in game loop: ${error.message}`);
+                await fetch('https://727ef8aa-0a18-4828-95a7-c23ec6d85038-00-1l1livgcuz7dn.spock.replit.dev/log', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ error: error })
+                });
+            } catch (e) {
+                console.error("Failed to log error:", e);
             }
         }
 
-        animate();
-    } catch (error) {
-        logError(`Global error: ${error.message}`);
-    }
-</script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
+        // Add lights
+        const ambientLight = new THREE.AmbientLight(0x404040); // soft white light
+        const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+        pointLight.position.set(50, 50, 50);
+        scene.add(ambientLight);
+        scene.add(pointLight);
+
+        // Load floor and player models
+        const loader = new OBJLoader();
+        let player, floor;
+
+        function loadModels() {
+            loader.load('floor.obj', (object) => {
+                floor = object;
+                scene.add(floor);
+            }, undefined, (error) => {
+                console.error('Error loading floor model:', error);
+                logError('Error loading floor model: ' + error);
+            });
+
+            loader.load('player.obj', (object) => {
+                player = object;
+                scene.add(player);
+                player.position.set(0, 0, 0); // Place the player on the floor
+            }, undefined, (error) => {
+                console.error('Error loading player model:', error);
+                logError('Error loading player model: ' + error);
+            });
+        }
+
+        // Joystick setup (add your joystick logic here)
+        function setupJoysticks() {
+            // Code for joystick setup goes here
+            console.log('Joysticks initialized'); // Temporary log for testing
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            if (player) {
+                player.rotation.y += 0.01; // Example rotation, adjust as needed
+            }
+            renderer.render(scene, camera);
+        }
+
+        // Initialize
+        function init() {
+            loadModels();
+            setupJoysticks();
+            animate();
+        }
+
+        window.onload = init;
+    </script>
+</head>
+<body>
 </body>
 </html>
