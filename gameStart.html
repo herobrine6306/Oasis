@@ -3,76 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Start</title>
+    <title>Oasis Game</title>
+    <script type="module" src="three.module.js"></script>
+    <script type="module" src="OBJLoader.js"></script>
+    <script type="module" src="controls.js"></script>
     <style>
-        body { margin: 0; }
+        body { margin: 0; overflow: hidden; }
         canvas { display: block; }
-        #error-message { position: absolute; color: red; top: 20px; left: 20px; }
     </style>
 </head>
 <body>
-    <div id="error-message"></div>
     <script type="module">
         import * as THREE from './three.module.js';
-        import { OrbitControls } from './controls.js'; // Assuming controls.js is defined
+        import { OrbitControls } from './controls.js';
+        import { OBJLoader } from './OBJLoader.js';
 
-        let scene, camera, renderer, player, floor;
+        let scene, camera, renderer, controls;
+        let player, floor;
 
         function init() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer();
+            renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            // Lighting
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(5, 5, 5).normalize();
-            scene.add(light);
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
 
-            // Load floor
-            const loader = new THREE.OBJLoader();
-            loader.load('floor.obj', (obj) => {
-                floor = obj;
+            camera.position.set(0, 5, 10);
+            controls.update();
+
+            window.addEventListener('resize', onWindowResize, false);
+            loadAssets();
+        }
+
+        function loadAssets() {
+            const objLoader = new OBJLoader();
+            objLoader.load('floor.obj', function (object) {
+                floor = object;
+                floor.position.y = -1;
                 scene.add(floor);
-                floor.position.y = -0.5; // Position it below the player
-            }, undefined, handleError);
+                checkLoadComplete();
+            }, undefined, function (error) {
+                handleError("Error loading floor.obj: " + error);
+            });
 
-            // Load player model
-            loader.load('player.obj', (obj) => {
-                player = obj;
+            objLoader.load('player.obj', function (object) {
+                player = object;
+                player.position.y = 0;
                 scene.add(player);
-                player.position.y = 0; // Position it above the floor
-            }, undefined, handleError);
+                checkLoadComplete();
+            }, undefined, function (error) {
+                handleError("Error loading player.obj: " + error);
+            });
 
-            // Set camera position
-            camera.position.z = 5;
+            // Add lights to the scene
+            const light = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(light);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+        }
 
-            // Controls
-            const controls = new OrbitControls(camera, renderer.domElement);
+        function checkLoadComplete() {
+            if (floor && player) {
+                startGame();
+            }
+        }
 
+        function startGame() {
             animate();
         }
 
         function animate() {
             requestAnimationFrame(animate);
-            if (player) {
-                // Add any player movement logic here
-            }
+            controls.update();
             renderer.render(scene, camera);
         }
 
-        function handleError(error) {
-            const errorMessage = document.getElementById('error-message');
-            errorMessage.innerHTML += `Error: ${error.message}<br>`;
-            console.error('An error occurred:', error);
+        function handleError(message) {
+            console.error(message);
+            alert(message); // Display error as alert for visibility
         }
 
-        window.addEventListener('resize', () => {
+        function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        }
 
         init();
     </script>
