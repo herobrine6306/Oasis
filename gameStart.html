@@ -1,147 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Game Start</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-        canvas {
-            display: block;
-        }
-        #error-message {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: red;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            font-family: Arial, sans-serif;
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Game</title>
+  <script src="three.module.js"></script>
+  <script src="controls.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+  </style>
 </head>
 <body>
-
-<div id="error-message"></div>
-<script type="module">
-    import * as THREE from './three.module.js';
-    import { OBJLoader } from './OBJLoader.js';
-
-    let scene, camera, renderer, player, floor;
-    let joystick1, joystick2; // For movement control
-    const errorMessage = document.getElementById('error-message');
-
-    init();
-    animate();
+  <script>
+    let scene, camera, renderer, controls;
 
     function init() {
-        try {
-            // Scene
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87CEEB); // Sky blue
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x000000);
 
-            // Camera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 1.6, 5); // Third-person perspective
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 5;
 
-            // Renderer
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
+      renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
 
-            // Lighting
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambientLight);
+      // Load player and floor models
+      const loader = new THREE.OBJLoader();
 
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-            directionalLight.position.set(5, 10, 7.5).normalize();
-            scene.add(directionalLight);
+      loader.load('floor.obj', function (object) {
+        scene.add(object);
+      });
 
-            // Load Floor
-            const objLoader = new OBJLoader();
-            objLoader.load('/mnt/data/floor.obj', function (object) {
-                floor = object;
-                floor.position.set(0, 0, 0);
-                floor.scale.set(5, 5, 5);
-                scene.add(floor);
-            }, onProgress, onError);
+      loader.load('player.obj', function (object) {
+        object.position.set(0, 0, 0);
+        scene.add(object);
+      });
 
-            // Load Player
-            objLoader.load('/mnt/data/player.obj', function (object) {
-                player = object;
-                player.position.set(0, 1, 0); // Start above floor
-                player.scale.set(0.5, 0.5, 0.5);
-                scene.add(player);
-            }, onProgress, onError);
+      // Custom controls
+      controls = new CustomControls(camera, renderer.domElement);
 
-            // Add Joysticks
-            createJoysticks();
+      const light = new THREE.AmbientLight(0xffffff, 1);
+      scene.add(light);
 
-            // Window resize listener
-            window.addEventListener('resize', onWindowResize, false);
-        } catch (error) {
-            displayError("Initialization failed: " + error.message);
-        }
-    }
-
-    function onWindowResize() {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+      animate();
     }
 
     function animate() {
-        requestAnimationFrame(animate);
-        if (player) {
-            player.rotation.y += 0.01; // Basic animation to rotate the player model
-        }
-        renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
     }
 
-    function onProgress(xhr) {
-        if (xhr.lengthComputable) {
-            const percentComplete = xhr.loaded / xhr.total * 100;
-            console.log('Model ' + Math.round(percentComplete, 2) + '% downloaded');
-        }
-    }
-
-    function onError(err) {
-        displayError("Error loading model: " + err.message);
-    }
-
-    function displayError(message) {
-        errorMessage.style.display = 'block';
-        errorMessage.textContent = message;
-    }
-
-    function createJoysticks() {
-        // This is a placeholder, actual joystick logic should be more detailed
-        joystick1 = document.createElement('div');
-        joystick1.style.position = 'absolute';
-        joystick1.style.bottom = '20px';
-        joystick1.style.left = '20px';
-        joystick1.style.width = '100px';
-        joystick1.style.height = '100px';
-        joystick1.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-        joystick1.style.borderRadius = '50%';
-        document.body.appendChild(joystick1);
-
-        joystick2 = document.createElement('div');
-        joystick2.style.position = 'absolute';
-        joystick2.style.bottom = '20px';
-        joystick2.style.right = '20px';
-        joystick2.style.width = '100px';
-        joystick2.style.height = '100px';
-        joystick2.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-        joystick2.style.borderRadius = '50%';
-        document.body.appendChild(joystick2);
-    }
-</script>
+    init();
+  </script>
 </body>
 </html>
