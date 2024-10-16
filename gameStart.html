@@ -20,50 +20,59 @@
 
         let scene, camera, renderer, controls;
         let player, floor;
+        let errors = []; // Array to store errors
 
         function init() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
+            try {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                document.body.appendChild(renderer.domElement);
 
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
+                controls = new OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
 
-            camera.position.set(0, 5, 10);
-            controls.update();
+                camera.position.set(0, 5, 10);
+                controls.update();
 
-            window.addEventListener('resize', onWindowResize, false);
-            loadAssets();
+                window.addEventListener('resize', onWindowResize, false);
+                loadAssets();
+            } catch (error) {
+                logError("Initialization Error: " + error);
+            }
         }
 
         function loadAssets() {
             const objLoader = new OBJLoader();
-            objLoader.load('floor.obj', function (object) {
-                floor = object;
-                floor.position.y = -1;
-                scene.add(floor);
-                checkLoadComplete();
-            }, undefined, function (error) {
-                handleError("Error loading floor.obj: " + error);
-            });
+            try {
+                objLoader.load('floor.obj', function (object) {
+                    floor = object;
+                    floor.position.y = -1;
+                    scene.add(floor);
+                    checkLoadComplete();
+                }, undefined, function (error) {
+                    logError("Error loading floor.obj: " + error);
+                });
 
-            objLoader.load('player.obj', function (object) {
-                player = object;
-                player.position.y = 0;
-                scene.add(player);
-                checkLoadComplete();
-            }, undefined, function (error) {
-                handleError("Error loading player.obj: " + error);
-            });
+                objLoader.load('player.obj', function (object) {
+                    player = object;
+                    player.position.y = 0;
+                    scene.add(player);
+                    checkLoadComplete();
+                }, undefined, function (error) {
+                    logError("Error loading player.obj: " + error);
+                });
 
-            // Add lights to the scene
-            const light = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(light);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-            directionalLight.position.set(5, 5, 5);
-            scene.add(directionalLight);
+                // Add lights to the scene
+                const light = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(light);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                directionalLight.position.set(5, 5, 5);
+                scene.add(directionalLight);
+            } catch (error) {
+                logError("Asset Loading Error: " + error);
+            }
         }
 
         function checkLoadComplete() {
@@ -73,7 +82,11 @@
         }
 
         function startGame() {
-            animate();
+            try {
+                animate();
+            } catch (error) {
+                logError("Start Game Error: " + error);
+            }
         }
 
         function animate() {
@@ -82,15 +95,20 @@
             renderer.render(scene, camera);
         }
 
-        function handleError(message) {
+        function logError(message) {
             console.error(message);
-            alert(message); // Display error as alert for visibility
+            errors.push(message); // Log to errors array
+            alert("Error: " + message); // Display error as alert
         }
 
         function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            try {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            } catch (error) {
+                logError("Resize Error: " + error);
+            }
         }
 
         init();
