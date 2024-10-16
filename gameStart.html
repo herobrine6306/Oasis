@@ -3,34 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Start</title>
+    <title>3D Game</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; }
+        canvas { display: block; }
+        #joystick { position: absolute; bottom: 10px; left: 10px; width: 100px; height: 100px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; }
         #error-msg { color: red; font-size: 20px; display: none; }
     </style>
 </head>
 <body>
+    <div id="joystick"></div>
     <div id="error-msg"></div>
     <script type="module">
         import * as THREE from './three.module.js';
-        import { OBJLoader } from './OBJLoader.js'; // Make sure OBJLoader.js is in the correct path
+        import { OBJLoader } from './OBJLoader.js'; // Ensure you have this file properly linked
 
-        let scene, camera, renderer, player, floor;
+        let scene, camera, renderer, player, floor, joystick;
 
         function init() {
             try {
+                // Setup Scene
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.set(0, 5, 10);
 
-                renderer = new THREE.WebGLRenderer();
+                renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 document.body.appendChild(renderer.domElement);
 
-                const light = new THREE.AmbientLight(0xffffff);
+                // Add light to the scene
+                const light = new THREE.AmbientLight(0xffffff, 1.5);
                 scene.add(light);
 
+                // Set void-like background (dark, empty space)
+                scene.background = new THREE.Color(0x000000);
+
+                // Load the assets
                 loadAssets();
+                setupJoysticks();
                 animate();
 
             } catch (e) {
@@ -40,13 +50,13 @@
 
         function loadAssets() {
             const loader = new OBJLoader();
-            
+
             // Load floor.obj
             loader.load('floor.obj',
                 function (obj) {
                     floor = obj;
                     floor.scale.set(10, 1, 10);
-                    floor.position.y = 0;
+                    floor.position.set(0, -1, 0);  // Positioning the floor
                     scene.add(floor);
                 },
                 undefined,
@@ -60,7 +70,7 @@
                 function (obj) {
                     player = obj;
                     player.scale.set(1, 1, 1);
-                    player.position.set(0, 1, 0);
+                    player.position.set(0, 1, 0);  // Position the player on top of the floor
                     scene.add(player);
                 },
                 undefined,
@@ -70,9 +80,36 @@
             );
         }
 
+        function setupJoysticks() {
+            joystick = document.getElementById('joystick');
+            joystick.addEventListener('touchstart', handleJoystickMove, false);
+            joystick.addEventListener('touchmove', handleJoystickMove, false);
+            joystick.addEventListener('touchend', stopPlayerMovement, false);
+        }
+
+        function handleJoystickMove(event) {
+            // Joystick move logic to control player movement
+            const touch = event.touches[0];
+            const centerX = joystick.offsetLeft + joystick.offsetWidth / 2;
+            const centerY = joystick.offsetTop + joystick.offsetHeight / 2;
+
+            const deltaX = touch.pageX - centerX;
+            const deltaY = touch.pageY - centerY;
+
+            if (player) {
+                // Apply simple movement logic based on joystick input
+                player.position.x += deltaX * 0.01;  // Adjust movement sensitivity as needed
+                player.position.z += deltaY * 0.01;
+            }
+        }
+
+        function stopPlayerMovement() {
+            // Stop player movement when joystick is released
+        }
+
         function animate() {
             requestAnimationFrame(animate);
-            if (player) player.rotation.y += 0.01;  // Example logic to rotate the player model
+            if (player) player.rotation.y += 0.01;  // Example rotation logic
             renderer.render(scene, camera);
         }
 
